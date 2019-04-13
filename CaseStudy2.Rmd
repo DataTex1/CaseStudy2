@@ -13,13 +13,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 <!-- install packages hidden-->
 ```{r echo=FALSE, include=FALSE}
-
     install.packages('tidyverse', repos="http://cran.us.r-project.org")
     install.packages('broom', repos="http://cran.us.r-project.org")
     install.packages('corrplot', repos="http://cran.us.r-project.org")
     install.packages('ISLR', repos="http://cran.us.r-project.org")
     #install.packages('caret', repos="http://cran.us.r-project.org")
-    install.packages('leaps', repos="http://cran.us.r-project.org")
+    #install.packages('leaps', repos="http://cran.us.r-project.org")
     install.packages('MASS', repos="http://cran.us.r-project.org")
     
     
@@ -29,7 +28,7 @@ knitr::opts_chunk$set(echo = TRUE)
     library(ISLR)
     library(readxl)
     #library(caret)
-    library(leaps)
+    #library(leaps)
     library(MASS)
     library(ggplot2)
     
@@ -51,61 +50,52 @@ The Dataset was comprised of 1470 observations each with 35 recorded variables. 
 
 
 ```{r ReadFile}
-
 #Read in the CaseStudy2-data.xlsx and set to Attrition data frame
-#attrition <- read_excel("C:/CaseStudy2/CaseStudy2-data.xlsx")
-attrition<-read_excel("/Users/ksomes/Downloads/CaseStudy2_2/CaseStudy2-data.xlsx")
-
+attrition <- read_excel("C:/CaseStudy2/CaseStudy2-data.xlsx")
+#attrition<-read_excel("/Users/ksomes/Downloads/CaseStudy2_2/CaseStudy2-data.xlsx")
 ```
 
 ## Excluded Variables Initial Analysis
 Upon the initial overview of the dataset it was determined that the variables "Standard Hours", "Over 18" and "Employee Count" would be excluded from exploratory data analysis as the value for those variables accross all observations is the same and would therefore impact the response variable for each observation with the same weight. The variable "Employee Number" was excluded from exploratory analysis because it is merely an identification variable and should have no effect on the response variable.
 
-Exclusion of those variables resulted in a dataset with the following 31 variables. 
+Exclusion of those variables resulted in a dataset with the following 30 explanatory variables. These variables would be used to determine their correlation to the response variable Attrition and to create a model for predicting Attrition. 
 
-|Dichotomous  |Nominal            |Ordinal                  |Interval/Ratio           |
-|-------------|-----------------------|-------------------------|-------------------------| 
-|Attrition    |BusinessTravel         |EnvironmentSatisfaction  |Age                      |
-|Gender       |Department             |JobInvolvement           |DailyRate                |
-|OverTime     |Education              |JobLevel                 |DistanceFromHome         |
-|             |EducationField         |JobSatisfaction          |HourlyRate               |
-|             |JobRole                |PerformanceRating        |MonthlyIncome            |
-|             |MaritalStatus          |RelationshipSatisfaction |MonthlyRate              |
-|             |                       |StockOptionLevel         |NumCompaniesWorked       |
-|             |                       |WorkLifeBalance          |PercentSalaryHike        |
-|             |                       |                         |TotalWorkingYears        |
-|             |                       |                         |TrainingTimesLastYear    |
-|             |                       |                         |YearsAtCompany           |
-|             |                       |                         |YearsInCurrentRole       |
-|             |                       |                         |YearsSinceLastPromotion  |
-|             |                       |                         |YearsWithCurrManager     |
+|Nominal                    |Ordinal                    |Continous                        |
+|---------------------------|---------------------------|---------------------------------| 
+|BusinessTravel             |EnvironmentSatisfaction    |Age                              |
+|Department                 |JobInvolvement             |DailyRate                        |
+|Education                  |JobLevel                   |DistanceFromHome                 |
+|EducationField             |JobSatisfaction            |HourlyRate                       |
+|JobRole                    |PerformanceRating          |MonthlyIncome                    |
+|MaritalStatus              |RelationshipSatisfaction   |MonthlyRate                      |
+|Gendter                    |StockOptionLevel           |NumCompaniesWorked               |
+|Overtime                   |WorkLifeBalance            |PercentSalaryHike                |
+|                           |                           |TotalWorkingYears                |
+|                           |                           |TrainingTimesLastYear            |
+|                           |                           |YearsAtCompany                   |
+|                           |                           |YearsInCurrentRole               |
+|                           |                           |YearsSinceLastPromotion          |
+|                           |                           |YearsWithCurrManager             |
 
 
 ```{r}
 # Drop Employee Count, Standard Hours, Over 18, and Employee number
 attrition <- attrition[,-c(9,10,22,27),drop=FALSE]
-
 ```
-## Preliminary Correlation Tests for Interval and Ratio Variables
+## Preliminary Correlation Tests for Continous Variables
 
 ```{r}
 # Create a new binary variable for attrition
 attrition$AttrV<-ifelse(attrition$Attrition=="Yes",1,0)
-
-#create subset of Interval/Ratio Variables
+#create subset of Continous Variables
 attritionInt <- attrition[,c(1,4,6,11,17:19,21,25,26,28:31,32)]
-
-
-#create correlation matix for Interval/Ratio Variables
+#create correlation matix for Continous Variables
 corAttInt <- cor(attritionInt)
-
 #plot correlation matrix
 corrplot(corAttInt, order='AOE', method='circle')
-
 #create smaller matrix focused on AttrV variable / Plot Matrix
 corAttrVInt <- corAttInt[c(11,15),]
 corrplot(corAttrVInt, method='circle',addCoef.col ='black', addCoefasPercent = TRUE )
-
 ```
 
 ## Preliminary Correlation Tests for for Ordinal Variables
@@ -114,24 +104,19 @@ corrplot(corAttrVInt, method='circle',addCoef.col ='black', addCoefasPercent = T
 ```{r}
 #create subset of Ordinal Variables
 attritionOrd <- attrition[,c(9,12,13,15,22:24,27,32)]
-
 #create correlation matix for Ordinal Variables
 corAttOrd <- cor(attritionOrd)
-
 #plot correlation matrix
 corrplot(corAttOrd,order='AOE', method='circle',addCoef.col ='black', addCoefasPercent = TRUE )
-
-
 #create smaller matrix focused on AttrV variable / Plot Matrix
 corAttrVOrd <- corAttOrd[c(3,9),]
 corrplot(corAttrVOrd, method='circle',addCoef.col ='black', addCoefasPercent = TRUE )
-
 ```
 
-## Preliminary t-tests of Interval, Ratio, and Ordinal Variables for significance
+## Preliminary t-tests for significance of Ordinal and Continous Variables.
 
-```{r echo=TRUE, include=FALSE}
 
+```{r echo=TRUE, results='hide', include=FALSE}
 t.test(Age ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
 t.test(DailyRate ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
 t.test(DistanceFromHome ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
@@ -154,43 +139,40 @@ t.test(YearsAtCompany ~ AttrV, data=attrition, var.equal=T, alternative='two.sid
 t.test(YearsInCurrentRole ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
 t.test(YearsSinceLastPromotion ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
 t.test(YearsWithCurrManager ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
-
 ```
 
-|Category	                |t-value|	p-value |
-|-------------------------|:-----:|:-------:|
-|TotalWorkingYears        |6.65   |< .0001  |
-|JobLevel	                |6.57	  |< .0001  |
-|YearsInCurrentRole	      |6.23	  |< .0001  |
-|MonthlyIncome	          |6.20	  |< .0001  |
-|Age                      |6.18   |< .0001  |
-|YearsWithCurrManager     |6.06   |< .0001  |
-|StockOptionLevel         |5.30	  |< .0001  |
-|YearsAtCompany	          |5.20	  |< .0001  |
-|JobInvolvement 	        |5.02	  |< .0001  |
-|JobSatisfaction	        |3.99	  |< .0001  |
-|EnvironmentSatisfaction	|3.98	  |< .0001  |
-|DistanceFromHome	        |2.99	  |.0027    |
-|WorkLifeBalance	        |2.45	  |.0142    |
-|TrainingTimesLastYear    |2.28   |.0225    |
-|DailyRate	              |2.17	  |.0299    |
-|RelationshipSatisfaction	|1.76	  |.0787    |
-|NumCompaniesWorked	      |1.67	  |.0955    |
-|YearsSinceLastPromotion  |1.27	  |.2058    |
-|Education	              |1.20	  |.2293    |
-|MonthlyRate	            |.58	  |.5611    |
-|PercentSalaryHike	      |.52	  |.6056    |
-|HourlyRate               |.26	  |.7931    |
+|Category	                  |t-value|	p-value |
+|-------------------------  |:-----:|:-------:|
+|TotalWorkingYears          |6.65   |< .0001  |
+|JobLevel                   |6.57	  |< .0001  |
+|YearsInCurrentRole         |6.23	  |< .0001  |
+|MonthlyIncome              |6.20	  |< .0001  |
+|Age                        |6.18   |< .0001  |
+|YearsWithCurrManager       |6.06   |< .0001  |
+|StockOptionLevel           |5.30	  |< .0001  |
+|YearsAtCompany             |5.20	  |< .0001  |
+|JobInvolvement             |5.02	  |< .0001  |
+|JobSatisfaction            |3.99	  |< .0001  |
+|EnvironmentSatisfaction    |3.98	  |< .0001  |
+|DistanceFromHome           |2.99	  |.0027    |
+|WorkLifeBalance            |2.45	  |.0142    |
+|TrainingTimesLastYear      |2.28   |.0225    |
+|DailyRate                  |2.17	  |.0299    |
+|RelationshipSatisfaction	  |1.76	  |.0787    |
+|NumCompaniesWorked	        |1.67	  |.0955    |
+|YearsSinceLastPromotion    |1.27	  |.2058    |
+|Education                  |1.20	  |.2293    |
+|MonthlyRate                |.58	  |.5611    |
+|PercentSalaryHike          |.52	  |.6056    |
+|HourlyRate                 |.26	  |.7931    |
 
 
 ## Preliminary Correlation Tests for for Nominal and Dichtomous Variables
 
 ```{r echo=TRUE, include=FALSE}
-
 #create subsets for Catergorical and Dichonomous Variables
 attritionCat <- attrition[,c(3,5,7,8,14,15,32)]
 attritionDic <- attrition[,c(10,20,32)]
-
 #create ANOVA tables
 aovTravel = aov(attrition$AttrV ~ attrition$BusinessTravel)
 aovDept= aov(attrition$AttrV ~ attrition$Department)
@@ -200,7 +182,6 @@ aovRole = aov(attrition$AttrV ~ attrition$JobRole)
 aovMStat = aov(attrition$AttrV ~ attrition$MaritalStatus)
 aovGen = aov(attrition$AttrV ~ attrition$Gender)
 aovOT = aov(attrition$AttrV ~ attrition$OverTime)
-
 summary(aovTravel)
 summary(aovDept)
 summary(aovEd)
@@ -226,11 +207,9 @@ summary(aovOT)
 #create  model dataset with chosen variables
 #attritionMdl <- attrition[,c(1,3,5,6,8,9,13:17,20,24,25,28,29,32),drop=FALSE]
 #attritionMdl$AttrV <- factor(attritionMdl$AttrV, levels = c(0, 1))
-
 #create full dataset with scrubbed data 
 attritionFull <- as.data.frame(attrition)
 attritionFull$AttrV <-ifelse(attrition$Attrition=="Yes",1,0)
-
 ```
 
 
@@ -240,11 +219,9 @@ attritionFull$AttrV <-ifelse(attrition$Attrition=="Yes",1,0)
 #create training data sample size at 80% of Dataset set.seed to ensure same rows are chosen
 smpSize = floor(.80*nrow(attritionFull))
 set.seed(123)
-
 trainSmp = sample(seq_len(nrow(attritionFull)),size = smpSize)
 trainAttr =attritionFull[trainSmp,] 
 testAttr=attritionFull[-trainSmp,]
-
 trainSmpF = sample(seq_len(nrow(attritionFull)),size = smpSize)
 trainAttrF =attritionFull[trainSmp,-2] 
 testAttrF=attritionFull[-trainSmp,]
@@ -257,6 +234,10 @@ The response variable of interest, Attrition, is binary. In order to determine w
 ## Stepwise Regression Variable Selection    
 In order to determine which factors have a higher association with attrition rate, two systematic approaches were used: Forward and Backward stepwise variable selection.  In both cases, the three variables selected are Marital Status, Overtime, and Total Working Years. The importance of these factors will be further assessed in the building of a logistic regression classification model.    
 
+```{r echo=FALSE, include=FALSE}
+install.packages('leaps', repos="http://cran.us.r-project.org")
+library(leaps)
+```
 ```{r}
 # Fit the full model
 StpFor<- regsubsets(AttrV~.,data=trainAttrF,method="forward",nbest=1, nvmax=3)
@@ -273,20 +254,16 @@ topBack
 ```{r}
 #create logitFull
 logitFull <- glm(AttrV ~ YearsAtCompany + BusinessTravel +	Department + EducationField + Gender +	JobRole + MaritalStatus + Age + HourlyRate + DailyRate + MonthlyRate + MonthlyIncome + DistanceFromHome + Education + EnvironmentSatisfaction + JobInvolvement + JobLevel + JobSatisfaction + NumCompaniesWorked + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager + OverTime, family = binomial, data = trainAttrF)
-
 summary(logitFull)
 anova(logitFull, test="Chisq")
 cor(trainAttr[,c(31,30,29,28)])
-
 #remove insignificant terms based on p-values and chi-squared tests & correlated terms
 logitmod<-glm(AttrV~OverTime+MaritalStatus+TotalWorkingYears+BusinessTravel+DistanceFromHome
               +EnvironmentSatisfaction+JobInvolvement+JobRole+JobSatisfaction+MaritalStatus
               +NumCompaniesWorked+TotalWorkingYears+OverTime+
               RelationshipSatisfaction,data=trainAttrF, family=binomial(link="logit"))
-
 summary(logitmod)
 anova(logitmod, test="Chisq")
-
 ```
 
 ## Variable Selection
@@ -297,32 +274,25 @@ Variables were selected in the model by assessing whether adding the term had an
 by.t<-attritionFull %>% group_by(TotalWorkingYears) %>% summarize(attt=sum(AttrV))
 prop.t<-by.t$attt/sum(by.t$attt)
 plot(by.t$TotalWorkingYears,logit(prop.t), xlab="Working Years", ylab="Log Odds of Attrition Rate")
-
 ```
 
 ## Testing the Model
 ```{r}
-
 #testing Data
 pred <- predict(logitMod, newdata = testAttr, type = "response")
 pred
-
 # Recode factors
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
 y_act <- testAttr$AttrV
-
 # Accuracy
 mean(y_pred == y_act)  
-
 predF <- predict(logitFull, newdata = testAttrF, type = "response")
 predF
-
 # Recode factors
 y_pred_numF <- ifelse(predF > 0.5, 1, 0)
 y_predF <- factor(y_pred_numF, levels=c(0, 1))
 y_actF <- testAttrF$AttrV
-
 # Accuracy
 mean(y_predF == y_actF)  
 ```    
@@ -353,10 +323,8 @@ Not many young employees have high monthly incomes, but low monthly incomes are 
 
 ```{r}
 ggplot(attritionFull, aes(x=YearsSinceLastPromotion, y=Age))+geom_point()+geom_smooth(method=lm)
-
 ```    
 Older employees tend to be promoted less often, while younger employees tend to more actively "climb the ladder". 
-
 
 
 
