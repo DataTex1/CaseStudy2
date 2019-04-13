@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
     install.packages('corrplot', repos="http://cran.us.r-project.org")
     install.packages('ISLR', repos="http://cran.us.r-project.org")
     #install.packages('caret', repos="http://cran.us.r-project.org")
-    #install.packages('leaps', repos="http://cran.us.r-project.org")
+    install.packages('leaps', repos="http://cran.us.r-project.org")
     install.packages('MASS', repos="http://cran.us.r-project.org")
     
     
@@ -29,14 +29,19 @@ knitr::opts_chunk$set(echo = TRUE)
     library(ISLR)
     library(readxl)
     #library(caret)
-    #library(leaps)
+    library(leaps)
     library(MASS)
+    library(ggplot2)
     
-
+logit <- function (ps)
+  ## define the logit function.
+{
+  log(ps/(1-ps))
+}
 ```
 ## Introduction
 According to the Society for Human Resource Management's 2016 *Human Capital Benchmarking Report*, the average cost-per-hire for companies is $4,129 and the average time to fill a vacant position is 42 days. In addtittion to recruitment and training costs high attrition can often mean that companies who lose experienced employees face the additional opertional costs of lost productivity. 
-Controling attrition is without a doubt an area of opportunity for all companies and one that can greatly impact long term success. The following report details the findings and recommendations of DDSAnalytics after having reviewed ACME Corporations turnover and HR data set. 
+Controlling attrition is without a doubt an area of opportunity for all companies, and one that can greatly impact long term success. The following report details the findings and recommendations of DDSAnalytics after having reviewed ACME Corporations turnover and HR data set. 
 
 Source: https://www.shrm.org/hr-today/trends-and-forecasting/research-and-surveys/Documents/2016-Human-Capital-Report.pdf
 
@@ -48,8 +53,8 @@ The Dataset was comprised of 1470 observations each with 35 recorded variables. 
 ```{r ReadFile}
 
 #Read in the CaseStudy2-data.xlsx and set to Attrition data frame
-attrition <- read_excel("C:/CaseStudy2/CaseStudy2-data.xlsx")
-
+#attrition <- read_excel("C:/CaseStudy2/CaseStudy2-data.xlsx")
+attrition<-read_excel("/Users/ksomes/Downloads/CaseStudy2_2/CaseStudy2-data.xlsx")
 
 ```
 
@@ -85,7 +90,7 @@ attrition <- attrition[,-c(9,10,22,27),drop=FALSE]
 
 ```{r}
 # Create a new binary variable for attrition
-attrition$AttrV <- ifelse(attrition$Attrition == 'Yes', attrition$AttrV <- 1, ifelse(attrition$Attrition == 'No', attrition$AttrV <- 0, attrition$Attrition <- NA))
+attrition$AttrV<-ifelse(attrition$Attrition=="Yes",1,0)
 
 #create subset of Interval/Ratio Variables
 attritionInt <- attrition[,c(1,4,6,11,17:19,21,25,26,28:31,32)]
@@ -217,34 +222,15 @@ summary(aovOT)
 |Education        |.044   |1.45     |.2290      |
 |Gender           |n/a    |1.28     |.2591      |
 
-## Variable Selection and Model Choice
-After examining the data it was decided to reduce the variables to be tested down to a set of 16 variables: Age, Business Travel, Department, DistanceFromHome, EducationField, EnvironmentSatisfaction, JobLevel, JobRole, JobSatisfaction, Marital Status, MonthlyIncome, OverTime, StockOptionLevel, TotalWorkingYears, YearsAtCompany, YearsInCurrentRole
-
-Because the response variable, Attrition, does not lend itself well to linear regression, it was decided that a logistic regression would be a better model.
-
 ```{r}
 #create  model dataset with chosen variables
-attritionMdl <- attrition[,c(1,3,5,6,8,9,13:17,20,24,25,28,29,32),drop=FALSE]
-attritionMdl$AttrV <- factor(attritionMdl$AttrV, levels = c(0, 1))
+#attritionMdl <- attrition[,c(1,3,5,6,8,9,13:17,20,24,25,28,29,32),drop=FALSE]
+#attritionMdl$AttrV <- factor(attritionMdl$AttrV, levels = c(0, 1))
 
 #create full dataset with scrubbed data 
 attritionFull <- as.data.frame(attrition)
-attritionFull$AttrV <- factor(attrition$AttrV, levels = c(0, 1))
+attritionFull$AttrV <-ifelse(attrition$Attrition=="Yes",1,0)
 
-```
-
-## Stepwise Regression Variable Selection
-
-
-```{r}
-# Fit the full model
-#attritionStp <- glm(AttrV ~ ., family = binomial, data = attrition)
-
-#Stepwise regression model
-#attritionStp <- stepAIC(attritionFull, direction = "both", 
-#                      trace = FALSE)
-#summary(attritionStep)
-    
 ```
 
 
@@ -252,31 +238,65 @@ attritionFull$AttrV <- factor(attrition$AttrV, levels = c(0, 1))
 
 ```{r}
 #create training data sample size at 80% of Dataset set.seed to ensure same rows are chosen
-smpSize = floor(.80*nrow(attritionMdl))
+smpSize = floor(.80*nrow(attritionFull))
 set.seed(123)
 
-trainSmp = sample(seq_len(nrow(attritionMdl)),size = smpSize)
-trainAttr =attritionMdl[trainSmp,] 
-testAttr=attritionMdl[-trainSmp,]
+trainSmp = sample(seq_len(nrow(attritionFull)),size = smpSize)
+trainAttr =attritionFull[trainSmp,] 
+testAttr=attritionFull[-trainSmp,]
 
 trainSmpF = sample(seq_len(nrow(attritionFull)),size = smpSize)
-trainAttrF =attritionFull[trainSmp,] 
+trainAttrF =attritionFull[trainSmp,-2] 
 testAttrF=attritionFull[-trainSmp,]
+```
 
-#create logitmodel 
-logitMod <- glm(AttrV ~ Age + BusinessTravel + Department + DistanceFromHome + EducationField + EnvironmentSatisfaction + JobLevel + JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + OverTime + StockOptionLevel + TotalWorkingYears + YearsAtCompany + YearsInCurrentRole, family =binomial, data = trainAttr)
+## Model Selection
+The response variable of interest, Attrition, is binary. In order to determine what leads to attrition, we decided to use a logistic regression model, a classification regression method for binary outputs. We assume that there is a linear, additive relationship between the predictors and the natural log odds of attrition rate.
 
+
+## Stepwise Regression Variable Selection    
+In order to determine which factors have a higher association with attrition rate, two systematic approaches were used: Forward and Backward stepwise variable selection.  In both cases, the three variables selected are Marital Status, Overtime, and Total Working Years. The importance of these factors will be further assessed in the building of a logistic regression classification model.    
+
+```{r}
+# Fit the full model
+StpFor<- regsubsets(AttrV~.,data=trainAttrF,method="forward",nbest=1, nvmax=3)
+topFor<-coef(StpFor,3)
+topFor
+StpBack <- regsubsets(AttrV~.,data=trainAttrF,method="backward",nbest=1, nvmax=3)
+topBack<-coef(StpBack,3)
+topBack
+    
+```    
+
+## Train Logistic Regression Model
+
+```{r}
 #create logitFull
 logitFull <- glm(AttrV ~ YearsAtCompany + BusinessTravel +	Department + EducationField + Gender +	JobRole + MaritalStatus + Age + HourlyRate + DailyRate + MonthlyRate + MonthlyIncome + DistanceFromHome + Education + EnvironmentSatisfaction + JobInvolvement + JobLevel + JobSatisfaction + NumCompaniesWorked + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager + OverTime, family = binomial, data = trainAttrF)
 
-summary(logitMod)
-
 summary(logitFull)
+anova(logitFull, test="Chisq")
+cor(trainAttr[,c(31,30,29,28)])
 
-# compare models
-anova(logitFull,logitMod)
+#remove insignificant terms based on p-values and chi-squared tests & correlated terms
+logitmod<-glm(AttrV~OverTime+MaritalStatus+TotalWorkingYears+BusinessTravel+DistanceFromHome
+              +EnvironmentSatisfaction+JobInvolvement+JobRole+JobSatisfaction+MaritalStatus
+              +NumCompaniesWorked+TotalWorkingYears+OverTime+
+              RelationshipSatisfaction,data=trainAttrF, family=binomial(link="logit"))
 
+summary(logitmod)
+anova(logitmod, test="Chisq")
 
+```
+
+## Variable Selection
+Variables were selected in the model by assessing whether adding the term had an impact on the model through analysis of variance tests and t-tests against the parameter value. Terms were removed from the model if the coefficient had a large p-value. For variables with similar p-values, the analysis of variance test was run on the model to determine which term explained the least amount of variation in attrition rate. As a result of this experimentation, the final model includes 11 terms: Business Travel, Distance From Home, Environment Satisfaction, Job Involvement, Job Role, Job Satisfaction, Marital Status, Number of Companies Worked, Overtime, Relationship Satisfaction, and Years With Current Manager. In the context of this model based on analysis of variance, the three most important factors that attribute to attrition are Overtime, Marital Status, and Total Working Years, which are the same factors selected by the stepwise algorithms. 
+
+#Visualizing Key Factors
+```{r}
+by.t<-attritionFull %>% group_by(TotalWorkingYears) %>% summarize(attt=sum(AttrV))
+prop.t<-by.t$attt/sum(by.t$attt)
+plot(by.t$TotalWorkingYears,logit(prop.t), xlab="Working Years", ylab="Log Odds of Attrition Rate")
 
 ```
 
@@ -305,6 +325,41 @@ y_actF <- testAttrF$AttrV
 
 # Accuracy
 mean(y_predF == y_actF)  
+```    
+
+The logistic regression model based on 11 variables had a 88% accurate classification rate against the test data. While overtime eligibility, marriage status, and years in the workforce are key indicators, there are many factors that lead to attrition in a company.
+
+## Other Job Role Trends
+While attrition is a great concern for companies, it is also important for management to understand the working culture that they create. Below we will discuss some key employee-related findings.    
+
+```{r}
+ggplot(attritionFull, aes(x=reorder(JobRole, MonthlyRate, FUN = median), y=MonthlyRate, color=JobRole)) + geom_boxplot()+theme(
+        axis.text.x=element_blank(),axis.title.x = element_blank())
+```    
+The monthly rate appears to be distributed evenly across all job roles; no job role has a significantly higher monthly rate than the others.
+
+```{r}
+ggplot(attritionFull, aes(x=reorder(JobRole, Age, FUN=median),y=Age, color=JobRole))+geom_boxplot()+theme(
+        axis.text.x=element_blank(), axis.title.x = element_blank())
+```    
+The distribution of ages differs across job roles. Sales Representatives tend to be the youngest, while managers and directors tend to be older. Healthcare representatives tend to be older than manufacturing directors, which is interesting considering it is not a traditional management role (management roles tend to be associated with experience and therefore age).     
+
+
+```{r}
+ggplot(attritionFull, aes(x=MonthlyIncome,y=Age))+geom_point()+geom_smooth(method=lm)
 ```
+Not many young employees have high monthly incomes, but low monthly incomes are associated with a wide range of ages.
+
+
+```{r}
+ggplot(attritionFull, aes(x=YearsSinceLastPromotion, y=Age))+geom_point()+geom_smooth(method=lm)
+
+```    
+Older employees tend to be promoted less often, while younger employees tend to more actively "climb the ladder". 
+
+
+
+
+
 
 
