@@ -13,18 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 <!-- install packages hidden-->
 ```{r echo=FALSE, include=FALSE}
+    install.packages("caret", repos="http://cran.us.r-project.org")
     install.packages('tidyverse', repos="http://cran.us.r-project.org")
     install.packages("rsample",repos="http://cran.us.r-project.org")
     install.packages('broom', repos="http://cran.us.r-project.org")
     install.packages('corrplot', repos="http://cran.us.r-project.org")
     install.packages('ISLR', repos="http://cran.us.r-project.org")
-    install.packages('caret', repos="http://cran.us.r-project.org")
+    install.packages("caret", repos="http://cran.us.r-project.org")
     install.packages("klaR",repos="http://cran.us.r-project.org")
     install.packages("e1071",repos="http://cran.us.r-project.org")
     #install.packages('leaps', repos="http://cran.us.r-project.org")
     install.packages('MASS', repos="http://cran.us.r-project.org")
     
-    
+    #reference libraries
     library(tidyverse)
     library(rsample) 
     library(klaR)
@@ -91,7 +92,7 @@ attrition <- attrition[,-c(9,10,22,27),drop=FALSE]
 ```
 
 ## Exploration of Probabilities: Naive Bayes 
-```{r}
+```{r echo=FALSE, include=FALSE}
 #new data frame of categorical variables
 dfcat <- attrition
 
@@ -184,6 +185,9 @@ dfcat$YearsSinceLastPromotion<-cut(dfcat$YearsSinceLastPromotion, seq(0,15,5), r
 #Categorize YearsWithCurrManager
 dfcat$YearsWithCurrManager<-cut(dfcat$YearsWithCurrManager, seq(0,20,5), right=FALSE, labels=c("Five_or_Less","Six_to_Ten","Eleven_to_Fifteen", "Sixteen_to_Twenty"))
 
+```
+
+```{r}
 #Run Model and get probabilities
 library(e1071)
 NB_All<- naiveBayes(Attrition~. ,data=dfcat, scale=T, type="prob")
@@ -191,9 +195,9 @@ NB_All<- naiveBayes(Attrition~. ,data=dfcat, scale=T, type="prob")
 NB_All$tables
 
 ```
-## Evaluating the Naive Bayes Model
 
-```{r}
+
+```{r echo=FALSE, include=FALSE}
 #Building the model
 # Create training (70%) and test (30%) sets
 set.seed(123)
@@ -217,14 +221,21 @@ train_control <- trainControl(method = "cv", number = 5)
 # train model
 nbayes_model <- train(x = x,y = y,method = "nb",trControl = train_control,tuneGrid = tgrid)
 
+```
+## Prediction and cross validation of Naive Bayes Model
+```{r }
 #Prediction and cross validation
 confusionMatrix(nbayes_model)
 
 
+```
+```{r echo=FALSE, include=FALSE}
 #Assess accuracy
 pred <- predict(nbayes_model, newdata = test)
 
 
+```
+```{r}
 #Show graph of clustered yes no prediction responses
 
 ggplot(test, aes(Attrition, pred, color = Attrition)) +
@@ -236,7 +247,11 @@ ggplot(test, aes(Attrition, pred, color = Attrition)) +
        caption="NaiveBayes")
 
 ```
-## Exploratory Data Analysis with Naive Bayes
+
+
+## Exploratory Data Analysis.  Interpreting the probabilities. 
+
+
 
 ```{r}
 
@@ -255,13 +270,36 @@ MaritalStat_prob
 barplot(MaritalStat_prob$Freq, names.arg = MaritalStat_prob$MaritalStatus, ylab="Attrition  Probability",main="Marital Status vs Attrition", cex.names=0.7,col="red",las=1)
 
 ```
+```{r}
 
+#Age.  Attrition probability is highest between 28 and 37 years of age.  The older the less likely to turn over. 
+Age_prob <- subset(data.frame(NB_All$tables$Agecat),Y=="Yes")
+Age_prob
+barplot(Age_prob$Freq, names.arg = Age_prob$Agecat, ylab="Attrition  Probability",main="Age vs Attrition", cex.names=0.7,col="red",las=1)
+
+```
+```{r}
+
+#Age.  Working Years vs Attrition.  The more work experience the less likely to turn over. 
+WorkYears_prob <- subset(data.frame(NB_All$tables$TotalWorkingYears),Y=="Yes")
+WorkYears_prob
+barplot(WorkYears_prob$Freq, names.arg = WorkYears_prob$TotalWorkingYears, ylab="Attrition  Probability",main="Working Years vs Attrition", cex.names=0.7,col="red",las=1)
+
+```
 ```{r}
 
 #Income vs Attrition.  The lower the income level the higher the probability of attrition
 MontlyI_prob <- subset(data.frame(NB_All$tables$MonthlyIncome),Y=="Yes")
 MontlyI_prob
 barplot(MontlyI_prob$Freq, names.arg = MontlyI_prob$MonthlyIncome, ylab="Attrition  Probability",main="Monthly Income vs Attrition", cex.names=0.7,col="red",las=1)
+
+```
+```{r}
+
+#Salary hike vs Attrition.  The lower the hike the higher the probability of attrition
+SalaryH_prob <- subset(data.frame(NB_All$tables$PercentSalaryHike),Y=="Yes")
+SalaryH_prob
+barplot(SalaryH_prob$Freq, names.arg = SalaryH_prob$PercentSalaryHike, ylab="Attrition  Probability",main="Percent Salary Hike vs Attrition", cex.names=0.7,col="red",las=1)
 
 ```
 
@@ -310,7 +348,10 @@ LifeBalance_prob
 barplot(LifeBalance_prob$Freq, names.arg = LifeBalance_prob$WorkLifeBalance, ylab="Attrition  Probability",main="Work Life Balance vs Attrition", cex.names=0.6,col="red",las=1)
 
 ```
-## Preliminary Correlation Tests for Continous Variables
+
+
+## Evaluating the correlations.  Logistric Regression.
+
 
 ```{r}
 # Create a new binary variable for attrition
