@@ -235,7 +235,7 @@ The response variable of interest, Attrition, is binary. In order to determine w
 In order to determine which factors have a higher association with attrition rate, two systematic approaches were used: Forward and Backward stepwise variable selection.  In both cases, the three variables selected are Marital Status, Overtime, and Total Working Years. The importance of these factors will be further assessed in the building of a logistic regression classification model.    
 
 ```{r echo=FALSE, include=FALSE}
-install.packages('leaps', repos="http://cran.us.r-project.org")
+install.packages("leaps", repos="http://cran.us.r-project.org") 
 library(leaps)
 ```
 ```{r}
@@ -258,12 +258,12 @@ summary(logitFull)
 anova(logitFull, test="Chisq")
 cor(trainAttr[,c(31,30,29,28)])
 #remove insignificant terms based on p-values and chi-squared tests & correlated terms
-logitmod<-glm(AttrV~OverTime+MaritalStatus+TotalWorkingYears+BusinessTravel+DistanceFromHome
+logitMod<-glm(AttrV~OverTime+MaritalStatus+TotalWorkingYears+BusinessTravel+DistanceFromHome
               +EnvironmentSatisfaction+JobInvolvement+JobRole+JobSatisfaction+MaritalStatus
               +NumCompaniesWorked+TotalWorkingYears+OverTime+
               RelationshipSatisfaction,data=trainAttrF, family=binomial(link="logit"))
-summary(logitmod)
-anova(logitmod, test="Chisq")
+summary(logitMod)
+anova(logitMod, test="Chisq")
 ```
 
 ## Variable Selection
