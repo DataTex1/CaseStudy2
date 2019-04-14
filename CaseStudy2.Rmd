@@ -1,7 +1,7 @@
 ---
 title: "DDSAnalytics Attrition Analysis"
-author: "Karen, Laurence, Sam"
-date: "April 4, 2019"
+author: "Sam Arellano, Laurence Clinton, Karen Somes"
+date: "April 15, 2019"
 output: 
         html_document:
         keep_md: yes
@@ -44,29 +44,31 @@ logit <- function (ps)
 {
   log(ps/(1-ps))
 }
-```
-## Introduction
+```    
+
+## Introduction   
+
 According to the Society for Human Resource Management's 2016 *Human Capital Benchmarking Report*, the average cost-per-hire for companies is $4,129 and the average time to fill a vacant position is 42 days. In addtittion to the recruitment and training costs high attrition, can also face increased opertional and reduced productivity as they lose trained and experienced employees.
 
 Controlling attrition is without a doubt an area of opportunity for all companies, and one that can greatly impact long term success. The following report details the findings and recommendations of DDSAnalytics after having reviewed ACME Corporations turnover and HR data set. 
 
-Source: https://www.shrm.org/hr-today/trends-and-forecasting/research-and-surveys/Documents/2016-Human-Capital-Report.pdf
+Source: https://www.shrm.org/hr-today/trends-and-forecasting/research-and-surveys/Documents/2016-Human-Capital-Report.pdf    
 
-## The Data
+## The Data    
 
-The Dataset was comprised of 1470 observations each with 35 recorded variables. The data tracked a variety of factors possibly related to attrition. Based on the recorded summary data the attrition rate for the company is estimated to be 16.1% and the estimated average tenure is approximately 7 years, though it must be noted that based on a maximum recorded employee number of 2068 we can infer that there are at least 598 missing records. As such, the data will be treated as a sample of the overall population of company employees. While it is our goal to identify correlations between variables and create a model that accurately predicts attrition, because the dataset is comprised of observational data, no inferences regarding causation should be drawn from the results.
+The Dataset was comprised of 1470 observations each with 35 recorded variables. The data tracked a variety of factors possibly related to attrition. Based on the recorded summary data the attrition rate for the company is estimated to be 16.1% and the estimated average tenure is approximately 7 years, though it must be noted that based on a maximum recorded employee number of 2068 we can infer that there are at least 598 missing records. As such, the data will be treated as a sample of the overall population of company employees. While it is our goal to identify correlations between variables and create a model that accurately predicts attrition, because the dataset is comprised of observational data, no inferences regarding causation should be drawn from the results.    
 
 
 ```{r ReadFile}
 #Read in the CaseStudy2-data.xlsx and set to Attrition data frame
-attrition <- read_excel("C:/git/CaseStudy2-master/CaseStudy2-data.xlsx")
-#attrition<-read_excel("/Users/ksomes/Downloads/CaseStudy2_2/CaseStudy2-data.xlsx")
+#attrition <- read_excel("C:/git/CaseStudy2-master/CaseStudy2-data.xlsx")
+attrition<-read_excel("/Users/ksomes/Downloads/CaseStudy2_2/CaseStudy2-data.xlsx")
 ```
 
-## Excluded Variables Initial Analysis
-Upon the initial overview of the dataset it was determined that the variables "Standard Hours", "Over 18" and "Employee Count" would be excluded from exploratory data analysis as the value for those variables accross all observations is the same and would therefore impact the response variable for each observation with the same weight. The variable "Employee Number" was excluded from exploratory analysis because it is merely an identification variable and should have no effect on the response variable.
+## Excluded Variables Initial Analysis    
+Upon the initial overview of the dataset it was determined that the variables "Standard Hours", "Over 18" and "Employee Count" would be excluded from exploratory data analysis as the value for those variables accross all observations is the same and would therefore impact the response variable for each observation with the same weight. The variable "Employee Number" was excluded from exploratory analysis because it is merely an identification variable and should have no effect on the response variable.    
 
-Exclusion of those variables resulted in a dataset with the following 30 explanatory variables. These variables would be used to determine their correlation to the response variable Attrition and to create a model for predicting Attrition. 
+Exclusion of those variables resulted in a dataset with the following 30 explanatory variables. These variables would be used to determine their correlation to the response variable Attrition and to create a model for predicting Attrition.     
 
 |Nominal                    |Ordinal                    |Continous                        |
 |---------------------------|---------------------------|---------------------------------| 
@@ -90,8 +92,8 @@ Exclusion of those variables resulted in a dataset with the following 30 explana
 # Drop Employee Count, Standard Hours, Over 18, and Employee number
 attrition <- attrition[,-c(9,10,22,27),drop=FALSE]
 ```
-
-## Exploration of Probabilities: Naive Bayes 
+    
+## Exploration of Probabilities: Naive Bayes     
 ```{r echo=FALSE, include=FALSE}
 #new data frame of categorical variables
 dfcat <- attrition
@@ -194,7 +196,7 @@ NB_All<- naiveBayes(Attrition~. ,data=dfcat, scale=T, type="prob")
 #list probabilities
 NB_All$tables
 
-```
+```    
 
 
 ```{r echo=FALSE, include=FALSE}
@@ -220,9 +222,11 @@ train_control <- trainControl(method = "cv", number = 5)
 
 # train model
 nbayes_model <- train(x = x,y = y,method = "nb",trControl = train_control,tuneGrid = tgrid)
+ 
+```      
 
-```
-## Prediction and cross validation of Naive Bayes Model
+## Prediction and cross validation of Naive Bayes Model  
+
 ```{r }
 #Prediction and cross validation
 confusionMatrix(nbayes_model)
@@ -246,13 +250,14 @@ ggplot(test, aes(Attrition, pred, color = Attrition)) +
        x="Truth",
        caption="NaiveBayes")
 
-```
+```    
 
+The Naive Bayes classification model had an overall accuracy rating of 74%. The recall, or the percentage of observations correctly captured for attrition, is 53%. The precision, or the number of observations predicted positive that are correctly positive, is 70%; this suggests that the model more accurately accounts for false positives than false negatives. However, there are less attrition instances observed, contributing the less accurate recall.     
 
+    
 ## Exploratory Data Analysis.  Interpreting the probabilities. 
-
-
-
+In this section, we will examine the existing observations to understand trends amongst the samples.        
+    
 ```{r}
 
 
@@ -261,7 +266,10 @@ Gender_prob <- subset(data.frame(NB_All$tables$Gender), Y=="Yes")
 Gender_prob
 barplot(Gender_prob$Freq, names.arg = Gender_prob$Gender, ylab="Attrition probability",main="Gender vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```     
+
+Men tend to have a higher attrition rate than women (63% versus 37%).    
+
 ```{r}
 
 #Singles have a higher probability of attrition compared to married and divorced. 
@@ -269,7 +277,10 @@ MaritalStat_prob <- subset(data.frame(NB_All$tables$MaritalStatus),Y=="Yes")
 MaritalStat_prob
 barplot(MaritalStat_prob$Freq, names.arg = MaritalStat_prob$MaritalStatus, ylab="Attrition  Probability",main="Marital Status vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```      
+
+Singles have a higher attrition rate at 51% than married (35%) or divorced individuals (14%).    
+
 ```{r}
 
 #Age.  Attrition probability is highest between 28 and 37 years of age.  The older the less likely to turn over. 
@@ -277,7 +288,10 @@ Age_prob <- subset(data.frame(NB_All$tables$Agecat),Y=="Yes")
 Age_prob
 barplot(Age_prob$Freq, names.arg = Age_prob$Agecat, ylab="Attrition  Probability",main="Age vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```     
+
+There is less turnover for older individuals. The attrition rate is highest for those between ages 28 and 37.    
+
 ```{r}
 
 #Age.  Working Years vs Attrition.  The more work experience the less likely to turn over. 
@@ -285,7 +299,10 @@ WorkYears_prob <- subset(data.frame(NB_All$tables$TotalWorkingYears),Y=="Yes")
 WorkYears_prob
 barplot(WorkYears_prob$Freq, names.arg = WorkYears_prob$TotalWorkingYears, ylab="Attrition  Probability",main="Working Years vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```     
+
+Similarly to age, those with less than 10 years of working experience have a much higher attrition rate than those with 11-20, 20-30, or more than 30 (67%, 26%, 6%, 1%, respectively).    
+
 ```{r}
 
 #Income vs Attrition.  The lower the income level the higher the probability of attrition
@@ -293,7 +310,10 @@ MontlyI_prob <- subset(data.frame(NB_All$tables$MonthlyIncome),Y=="Yes")
 MontlyI_prob
 barplot(MontlyI_prob$Freq, names.arg = MontlyI_prob$MonthlyIncome, ylab="Attrition  Probability",main="Monthly Income vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```      
+
+In addition to age and experience, income has a similar relationship were attrition is much higher for employees who earn less. For those who make less than $5,000, the attrition rate is 69%. For those who earn 5,000-10,000, 10,000-15,000, and greater than 15,000 a month have rates of 21%, 8%, and 2%, respectively.    
+
 ```{r}
 
 #Salary hike vs Attrition.  The lower the hike the higher the probability of attrition
@@ -301,7 +321,10 @@ SalaryH_prob <- subset(data.frame(NB_All$tables$PercentSalaryHike),Y=="Yes")
 SalaryH_prob
 barplot(SalaryH_prob$Freq, names.arg = SalaryH_prob$PercentSalaryHike, ylab="Attrition  Probability",main="Percent Salary Hike vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```     
+
+Those who receive less of a proportional increase in salary also have a higher attrition rate. For raises that are 15% or less, there is a 56% attrition rate, versus 29% for 15-20% and 15% for a 20+% raise.   
+
 
 ```{r}
 
@@ -310,13 +333,18 @@ StockO_prob <- subset(data.frame(NB_All$tables$StockOptionLevel),Y=="Yes")
 StockO_prob
 barplot(StockO_prob$Freq, names.arg = StockO_prob$StockOptionLevel, ylab="Attrition Probability",main="Stock Options vs Attrition", cex.names=0.7,col="red",las=1)
 
-```
+```      
+
+Those without stock options have the highest attrition frequency at 65%. 
+
 ```{r}
 #Attrition vs Opportunity to travel.  If you can travel, the opportunity to travel shows a lower probability of attrition.
 BusTrav_prob <- subset(data.frame(NB_All$tables$BusinessTravel), Y=="Yes")
 BusTrav_prob
 barplot(BusTrav_prob$Freq, names.arg = BusTrav_prob$BusinessTravel, ylab="Attrition  Probability",main="Opportunity to Travel vs Attrition", cex.names=0.7,col="red",las=1)
-```
+```      
+
+Employees who do not have the option to travel have a very low attrition rate of 5%. For those who can travel, those that travel rarely have a much higher attrition rate than those who do travel (66% versus 29%).    
 
 ```{r}
 
@@ -325,7 +353,9 @@ Education_prob <- subset(data.frame(NB_All$tables$Education), Y=="Yes")
 Education_prob
 barplot(Education_prob$Freq ,names.arg=Education_prob$Education,ylab="Probability of Attrition",main="Education vs Attrition", cex.names=0.7,col="red",las=2)
 
-```
+```     
+
+Those with bachelor's, master's, and college degrees have the highest attrition rates at 42%, 24%, and 19%. Those with doctorate's and no college degrees have lower rates at 2% and 13%. Since there is no sequential trend, this suggests that there are factors correlated to education that also affect attrition.    
 
 ```{r}
 #Department vs probability of attrition.  Technical field tend to have a higher probability of attrition.  Human resources have a low probability of attrition in comparison.
@@ -333,26 +363,34 @@ Depart_prob <- subset(data.frame(NB_All$tables$Department),Y=="Yes")
 Depart_prob
 barplot(Depart_prob$Freq, names.arg = Depart_prob$Department, ylab="Attrition  Probability",main="Department vs Attrition", cex.names=0.4,col="red",las=2)
 
-```
+```     
+
+Research & Development employees have the highest attrition at 56%, followed by sales at 39%, then HR at 5%.    
 
 ```{r}
 #Job Involvment.  High degrees of job involvment such as those in technical field have a highe probability of attrition. However, if you are a decision maker such as a Chief Data Scientist very high involvment have low probabilities of attrition.
 JobI_prob <- subset(data.frame(NB_All$tables$JobInvolvement), Y=="Yes")
 JobI_prob
 barplot(JobI_prob$Freq, names.arg = JobI_prob$JobInvolvement, ylab="Attrition  Probability",main="Job Involvement vs Attrition", cex.names=0.6,col="red",las=1)
-```
+```     
+
+
+High and medium job involvement have higher attrition rates at 53% and 30%, while very high involvement has a rate of 5% and low involvement has a rate of 12%. This could be due to the nature of the ranking system (more likely to avoid extreme rankings) or another correlated factor.      
+
 ```{r}
 #Work life balance. On surveys 'Better' may be and indicator of employee unhappiness. A mark of 'Better' has a high probability of attrition
 LifeBalance_prob <- subset(data.frame(NB_All$tables$WorkLifeBalance),Y=="Yes")
 LifeBalance_prob
 barplot(LifeBalance_prob$Freq, names.arg = LifeBalance_prob$WorkLifeBalance, ylab="Attrition  Probability",main="Work Life Balance vs Attrition", cex.names=0.6,col="red",las=1)
 
-```
+```      
+
+Those with "better" and "good" work life balances counterintuitively have higher attrition rates of 54% and 24%.  The two more extreme rankings of "bad" and "best" are 10% and 11% respectively.   
 
 
-## Evaluating the correlations.  Logistric Regression.
+## Evaluating the correlations.  Logistic Regression.
 
-
+    
 ```{r}
 # Create a new binary variable for attrition
 attrition$AttrV<-ifelse(attrition$Attrition=="Yes",1,0)
@@ -365,7 +403,9 @@ corrplot(corAttInt, order='AOE', method='circle')
 #create smaller matrix focused on AttrV variable / Plot Matrix
 corAttrVInt <- corAttInt[c(11,15),]
 corrplot(corAttrVInt, method='circle',addCoef.col ='black', addCoefasPercent = TRUE )
-```
+```      
+
+The strongest correlations between predictors occurs for the many variatons of working experience predictors (i.e. years with current manager, years in current role, years since last promotion, years at the company, total working years, monthly income, and age). Due to these correlations, these variables are likely to provide little additional insight when used in an additive model framework such as logistic regression (which we will implement later in this analysis).    
 
 ## Preliminary Correlation Tests for for Ordinal Variables
 
@@ -380,11 +420,13 @@ corrplot(corAttOrd,order='AOE', method='circle',addCoef.col ='black', addCoefasP
 #create smaller matrix focused on AttrV variable / Plot Matrix
 corAttrVOrd <- corAttOrd[c(3,9),]
 corrplot(corAttrVOrd, method='circle',addCoef.col ='black', addCoefasPercent = TRUE )
-```
+```    
+
+There appear to be no correlations of concern for the ordinal variables in question.    
 
 ## Preliminary t-tests for significance of Ordinal and Continous Variables.
-
-
+Each variable was tested for significance in a singular comparison with attrition rate.    
+    
 ```{r echo=TRUE, results='hide', include=FALSE}
 t.test(Age ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
 t.test(DailyRate ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
@@ -437,7 +479,7 @@ t.test(YearsWithCurrManager ~ AttrV, data=attrition, var.equal=T, alternative='t
 
 
 ## Preliminary Correlation Tests for for Nominal Variables
-
+    
 ```{r echo=TRUE, include=FALSE}
 #create subsets for Catergorical and Dichonomous Variables
 attritionCat <- attrition[,c(3,5,7,8,14,15,32)]
@@ -460,7 +502,7 @@ summary(aovMStat)
 summary(aovGen)
 summary(aovOT)
 ```
-
+    
 |Category         |**r**  |F-value  |*p*-value  |
 |-----------------|:-----:|:-------:|:---------:|
 |Over Time        |n/a    |94.66    |< .0001    |
@@ -481,7 +523,7 @@ attritionFull <- as.data.frame(attrition)
 attritionFull$AttrV <-ifelse(attrition$Attrition=="Yes",1,0)
 ```
 
-
+    
 ## Creating a Training Model
 
 ```{r}
@@ -494,7 +536,8 @@ testAttr=attritionFull[-trainSmp,]
 trainSmpF = sample(seq_len(nrow(attritionFull)),size = smpSize)
 trainAttrF =attritionFull[trainSmp,-2] 
 testAttrF=attritionFull[-trainSmp,]
-```
+```     
+
 
 ## Model Selection
 The response variable of interest, Attrition, is binary. In order to determine what leads to attrition, we decided to use a logistic regression model, a classification regression method for binary outputs. We assume that there is a linear, additive relationship between the predictors and the natural log odds of attrition rate.
@@ -502,7 +545,7 @@ The response variable of interest, Attrition, is binary. In order to determine w
 
 ## Stepwise Regression Variable Selection    
 In order to determine which factors have a higher association with attrition rate, two systematic approaches were used: Forward and Backward stepwise variable selection.  In both cases, the three variables selected are Marital Status, Overtime, and Total Working Years. The importance of these factors will be further assessed in the building of a logistic regression classification model.    
-
+    
 ```{r echo=FALSE, include=FALSE}
 install.packages("leaps", repos="http://cran.us.r-project.org") 
 library(leaps)
@@ -516,15 +559,15 @@ StpBack <- regsubsets(AttrV~.,data=trainAttrF,method="backward",nbest=1, nvmax=3
 topBack<-coef(StpBack,3)
 topBack
     
-```    
-
+```        
+    
 ## Train Logistic Regression Model
-
+    
 ```{r}
 #create logitFull
 logitFull <- glm(AttrV ~ YearsAtCompany + BusinessTravel +	Department + EducationField + Gender +	JobRole + MaritalStatus + Age + HourlyRate + DailyRate + MonthlyRate + MonthlyIncome + DistanceFromHome + Education + EnvironmentSatisfaction + JobInvolvement + JobLevel + JobSatisfaction + NumCompaniesWorked + PercentSalaryHike + PerformanceRating + RelationshipSatisfaction + StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear + WorkLifeBalance + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager + OverTime, family = binomial, data = trainAttrF)
-summary(logitFull)
-anova(logitFull, test="Chisq")
+s<-summary(logitFull)
+a<-anova(logitFull, test="Chisq")
 cor(trainAttr[,c(31,30,29,28)])
 #remove insignificant terms based on p-values and chi-squared tests & correlated terms
 logitMod<-glm(AttrV~OverTime+MaritalStatus+TotalWorkingYears+BusinessTravel+DistanceFromHome
@@ -533,23 +576,25 @@ logitMod<-glm(AttrV~OverTime+MaritalStatus+TotalWorkingYears+BusinessTravel+Dist
               RelationshipSatisfaction,data=trainAttrF, family=binomial(link="logit"))
 summary(logitMod)
 anova(logitMod, test="Chisq")
-```
+```      
 
+    
 ## Variable Selection
-Variables were selected in the model by assessing whether adding the term had an impact on the model through analysis of variance tests and t-tests against the parameter value. Terms were removed from the model if the coefficient had a large p-value. For variables with similar p-values, the analysis of variance test was run on the model to determine which term explained the least amount of variation in attrition rate. As a result of this experimentation, the final model includes 11 terms: Business Travel, Distance From Home, Environment Satisfaction, Job Involvement, Job Role, Job Satisfaction, Marital Status, Number of Companies Worked, Overtime, Relationship Satisfaction, and Years With Current Manager. In the context of this model based on analysis of variance, the three most important factors that attribute to attrition are Overtime, Marital Status, and Total Working Years, which are the same factors selected by the stepwise algorithms. 
+Variables were selected in the model by assessing whether adding the term had an impact on the model through analysis of variance tests and t-tests against the parameter value. Terms were removed from the model if the coefficient had a large p-value. For variables with similar p-values, the analysis of variance test was run on the model to determine which term explained the least amount of variation in attrition rate. As a result of this experimentation, the final model includes 11 terms: Business Travel, Distance From Home, Environment Satisfaction, Job Involvement, Job Role, Job Satisfaction, Marital Status, Number of Companies Worked, Overtime, Relationship Satisfaction, and Years With Current Manager. In the context of this model based on analysis of variance, the three most important factors that attribute to attrition are Overtime, Marital Status, and Total Working Years, which are the same factors selected by the stepwise algorithms.         
 
-#Visualizing Key Factors
+## Visualizing Working Years   
 ```{r}
 by.t<-attritionFull %>% group_by(TotalWorkingYears) %>% summarize(attt=sum(AttrV))
 prop.t<-by.t$attt/sum(by.t$attt)
 plot(by.t$TotalWorkingYears,logit(prop.t), xlab="Working Years", ylab="Log Odds of Attrition Rate")
-```
+```     
 
-## Testing the Model
+
+## Testing the Model    
 ```{r}
 #testing Data
 pred <- predict(logitMod, newdata = testAttr, type = "response")
-pred
+
 # Recode factors
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
@@ -557,44 +602,55 @@ y_act <- testAttr$AttrV
 # Accuracy
 mean(y_pred == y_act)  
 predF <- predict(logitFull, newdata = testAttrF, type = "response")
-predF
+
 # Recode factors
 y_pred_numF <- ifelse(predF > 0.5, 1, 0)
 y_predF <- factor(y_pred_numF, levels=c(0, 1))
 y_actF <- testAttrF$AttrV
 # Accuracy
 mean(y_predF == y_actF)  
-```    
+```     
 
-The logistic regression model based on 11 variables had a 88% accurate classification rate against the test data. While overtime eligibility, marriage status, and years in the workforce are key indicators, there are many factors that lead to attrition in a company.
 
-## Other Job Role Trends
-While attrition is a great concern for companies, it is also important for management to understand the working culture that they create. Below we will discuss some key employee-related findings.    
+The logistic regression model based on 11 variables had a 88% accurate classification rate against the test data. While overtime eligibility, marriage status, and years in the workforce are key indicators, there are many factors that lead to attrition in a company.    
+
+## Other Job Role Trends    
+While attrition is a great concern for companies, it is also important for management to understand the working culture that they create. Below we will discuss some key employee-related findings.        
 
 ```{r}
 ggplot(attritionFull, aes(x=reorder(JobRole, MonthlyRate, FUN = median), y=MonthlyRate, color=JobRole)) + geom_boxplot()+theme(
-        axis.text.x=element_blank(),axis.title.x = element_blank())
-```    
-The monthly rate appears to be distributed evenly across all job roles; no job role has a significantly higher monthly rate than the others.
+      axis.text.x=element_blank(),axis.title.x = element_blank())
+```          
+
+The monthly rate appears to be distributed evenly across all job roles; no job role has a significantly higher monthly rate than the others.     
 
 ```{r}
 ggplot(attritionFull, aes(x=reorder(JobRole, Age, FUN=median),y=Age, color=JobRole))+geom_boxplot()+theme(
         axis.text.x=element_blank(), axis.title.x = element_blank())
-```    
-The distribution of ages differs across job roles. Sales Representatives tend to be the youngest, while managers and directors tend to be older. Healthcare representatives tend to be older than manufacturing directors, which is interesting considering it is not a traditional management role (management roles tend to be associated with experience and therefore age).     
+```      
+
+
+The distribution of ages differs across job roles. Sales Representatives tend to be the youngest, while managers and directors tend to be older. Healthcare representatives tend to be older than manufacturing directors, which is interesting considering it is not a traditional management role (management roles tend to be associated with experience and therefore age).         
 
 
 ```{r}
 ggplot(attritionFull, aes(x=MonthlyIncome,y=Age))+geom_point()+geom_smooth(method=lm)
-```
-Not many young employees have high monthly incomes, but low monthly incomes are associated with a wide range of ages.
+```      
+
+
+Not many young employees have high monthly incomes, but low monthly incomes are associated with a wide range of ages.    
 
 
 ```{r}
 ggplot(attritionFull, aes(x=YearsSinceLastPromotion, y=Age))+geom_point()+geom_smooth(method=lm)
-```    
-Older employees tend to be promoted less often, while younger employees tend to more actively "climb the ladder". 
+```      
 
+
+Older employees tend to be promoted less often, while younger employees tend to more actively "climb the ladder".     
+
+## Conclusions from Analysis    
+
+Through exploration into attrition contributors, it is clear that many factors are correlated and influenced by a number of externalities. Not only are employees affected by personal circumstances (marriage status, work life balance, age), but internal as well (job role, salary increases, overtime eligibility).  Each factor conveys a unique relationship with employees and their behavior, and there are a number of techniques available to gain an understanding of the underlying relationships. 
 
 
 
