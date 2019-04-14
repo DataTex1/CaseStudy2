@@ -39,14 +39,15 @@ logit <- function (ps)
 }
 ```
 ## Introduction
-According to the Society for Human Resource Management's 2016 *Human Capital Benchmarking Report*, the average cost-per-hire for companies is $4,129 and the average time to fill a vacant position is 42 days. In addtittion to recruitment and training costs high attrition can often mean that companies who lose experienced employees face the additional opertional costs of lost productivity. 
+According to the Society for Human Resource Management's 2016 *Human Capital Benchmarking Report*, the average cost-per-hire for companies is $4,129 and the average time to fill a vacant position is 42 days. In addtittion to the recruitment and training costs high attrition, can also face increased opertional and reduced productivity as they lose trained and experienced employees.
+
 Controlling attrition is without a doubt an area of opportunity for all companies, and one that can greatly impact long term success. The following report details the findings and recommendations of DDSAnalytics after having reviewed ACME Corporations turnover and HR data set. 
 
 Source: https://www.shrm.org/hr-today/trends-and-forecasting/research-and-surveys/Documents/2016-Human-Capital-Report.pdf
 
 ## The Data
 
-The Dataset was comprised of 1470 observations each with 35 recorded variables. The data tracked a variety of factors possibly related to attrition. Based on the recorded summary data the attrition rate for the company is estimated to be 16.1%, though it must be noted that based on a maximum recorded employee number of 2068 we can infer that there are at least 598 missing records. As such, the data will be treated as a sample of the overall population of company employees. While it is our goal to identify correlation and create a model that accurately predicts attrition, because the dataset is comprised of observational data, no inferences regarding causation should be drawn from the results.
+The Dataset was comprised of 1470 observations each with 35 recorded variables. The data tracked a variety of factors possibly related to attrition. Based on the recorded summary data the attrition rate for the company is estimated to be 16.1% and the estimated average tenure is approximately 7 years, though it must be noted that based on a maximum recorded employee number of 2068 we can infer that there are at least 598 missing records. As such, the data will be treated as a sample of the overall population of company employees. While it is our goal to identify correlations between variables and create a model that accurately predicts attrition, because the dataset is comprised of observational data, no inferences regarding causation should be drawn from the results.
 
 
 ```{r ReadFile}
@@ -141,33 +142,33 @@ t.test(YearsSinceLastPromotion ~ AttrV, data=attrition, var.equal=T, alternative
 t.test(YearsWithCurrManager ~ AttrV, data=attrition, var.equal=T, alternative='two.sided')
 ```
 
-|Category	                  |t-value|	p-value |
+|Category                   |t-value|	p-value |
 |-------------------------  |:-----:|:-------:|
 |TotalWorkingYears          |6.65   |< .0001  |
-|JobLevel                   |6.57	  |< .0001  |
-|YearsInCurrentRole         |6.23	  |< .0001  |
-|MonthlyIncome              |6.20	  |< .0001  |
+|JobLevel                   |6.57   |< .0001  |
+|YearsInCurrentRole         |6.23   |< .0001  |
+|MonthlyIncome              |6.20   |< .0001  |
 |Age                        |6.18   |< .0001  |
 |YearsWithCurrManager       |6.06   |< .0001  |
-|StockOptionLevel           |5.30	  |< .0001  |
-|YearsAtCompany             |5.20	  |< .0001  |
-|JobInvolvement             |5.02	  |< .0001  |
-|JobSatisfaction            |3.99	  |< .0001  |
-|EnvironmentSatisfaction    |3.98	  |< .0001  |
-|DistanceFromHome           |2.99	  |.0027    |
-|WorkLifeBalance            |2.45	  |.0142    |
+|StockOptionLevel           |5.30   |< .0001  |
+|YearsAtCompany             |5.20   |< .0001  |
+|JobInvolvement             |5.02   |< .0001  |
+|JobSatisfaction            |3.99   |< .0001  |
+|EnvironmentSatisfaction    |3.98   |< .0001  |
+|DistanceFromHome           |2.99   |.0027    |
+|WorkLifeBalance            |2.45   |.0142    |
 |TrainingTimesLastYear      |2.28   |.0225    |
-|DailyRate                  |2.17	  |.0299    |
-|RelationshipSatisfaction	  |1.76	  |.0787    |
-|NumCompaniesWorked	        |1.67	  |.0955    |
-|YearsSinceLastPromotion    |1.27	  |.2058    |
-|Education                  |1.20	  |.2293    |
-|MonthlyRate                |.58	  |.5611    |
-|PercentSalaryHike          |.52	  |.6056    |
-|HourlyRate                 |.26	  |.7931    |
+|DailyRate                  |2.17   |.0299    |
+|RelationshipSatisfaction   |1.76   |.0787    |
+|NumCompaniesWorked         |1.67   |.0955    |
+|YearsSinceLastPromotion    |1.27   |.2058    |
+|Education                  |1.20   |.2293    |
+|MonthlyRate                |.58    |.5611    |
+|PercentSalaryHike          |.52    |.6056    |
+|HourlyRate                 |.26    |.7931    |
 
 
-## Preliminary Correlation Tests for for Nominal and Dichtomous Variables
+## Preliminary Correlation Tests for for Nominal Variables
 
 ```{r echo=TRUE, include=FALSE}
 #create subsets for Catergorical and Dichonomous Variables
